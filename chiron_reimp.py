@@ -81,9 +81,10 @@ pickle_path = "toy_data.pk"
 def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = 48):
     inputs = Input(shape=input_shape)
     input_length = Input(name='input_length', shape=[1], dtype='int64')
+    seq_len = tf.placeholder(tf.int32, shape=[batch_size])
     outputs = chiron_cnn(inputs,cnn_filter_num,1,window_len,res_layers = res_layers)
     #outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
-    outputs2 = my_rnn_layers(outputs,input_shape[0],hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
+    outputs2 = my_rnn_layers(outputs,seq_len,hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
     dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
     dense2 =  TimeDistributed(Dense(class_num))(dense)
     preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
