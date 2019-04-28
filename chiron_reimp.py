@@ -54,7 +54,6 @@ import argparse
 from evaluate import evaluate_preds,evaluate_preds2,editDistance
 
 from read_data import read_h5,read_from_dict, split_data,read_raw_into_segments,unet_loading_data
-CB = [callbacks.EarlyStopping(monitor="val_loss", patience=5, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
 
 n = 300000
 test_size = n/10
@@ -299,6 +298,8 @@ def train():
     epoch_num = FLAGS.epoch_num
     #train_size = int(size - dev_size)
     test_folder = ""
+    CB = [callbacks.ModelCheckpoint(model_name+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=False, mode='auto', period=3)
+    ,callbacks.EarlyStopping(monitor="val_loss", patience=5, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
     if readraw:
         print("Reading raw data")
         x_tr, y_labels , label_lengths,max_label_length= read_raw_into_segments(inputpath,seq_length = seq_len, sample_num = size,y_pad = 4)
