@@ -34,7 +34,7 @@ from keras.optimizers import RMSprop, SGD, Adam
 from keras import callbacks, losses
 from keras import backend as K
 from keras.utils import to_categorical
-from keras_contrib.layers import CRF
+#from keras_contrib.layers import CRF
 from keras.layers import Lambda
 
 from models.model_unet import *
@@ -66,10 +66,10 @@ def seqCompact(seq):
         else:
 
             output_seq += current
-            
+
             nc_seq.append(current)
             nc_count.append(count)
-            
+
             count, current = 1, seq[i]
 
 
@@ -82,44 +82,41 @@ def seqCompact(seq):
     return (nc_seq, nc_count)
 
 
-# bi-directional mapping of the nc with the adjacent count information 
+# bi-directional mapping of the nc with the adjacent count information
 def nc2newIdx(nc, count, max_len=12):
 
 	Alphabeta=['0', '1','2','3', '4']
 	idx = Alphabeta.index(nc)
 	new_idx = max_len*idx + count-1
-	
+
 	return new_idx
 
 def newIdx2nc(new_idx, max_len=12):
-
-	Alphabet = ['A', 'C', 'G', 'T', 'X']
-	idx = int(new_idx/max_len)
-        count = new_idx%max_len + 1
-	
-        return Alphabet[idx]+"_"+str(count)
+    Alphabet = ['A', 'C', 'G', 'T', 'X']
+    idx = int(new_idx/max_len)
+    count = new_idx%max_len + 1
+    return Alphabet[idx]+"_"+str(count)
 
 
 # tranform the adjacent labels with attached number information.
 def adjLabelTransform(label_raw, debug=False):
+    new_labels = []
+    nc_seq, nc_count = seqCompact(np.array(label_raw).astype(str))
 
-	new_labels = []
-        nc_seq, nc_count = seqCompact(np.array(label_raw).astype(str))
+    for idx in range(len(nc_count)):
+        new_idx = nc2newIdx(nc_seq[idx], nc_count[idx]) + 1
+        new_labels.extend([new_idx]*nc_count[idx])
 
-	for idx in range(len(nc_count)):
-		new_idx = nc2newIdx(nc_seq[idx], nc_count[idx]) + 1
-		new_labels.extend([new_idx]*nc_count[idx])
-	
-	if debug:
-		print("@Original label sequence is:")
-		print(label_raw)
-		print("* Generated new labels is:")
-		print(new_labels)
-		print("* Recover for the new labels list is:")
-		print([newIdx2nc(idx-1) for idx in new_labels])
-	
-	return new_labels
-	
+    if debug:
+    	print("@Original label sequence is:")
+    	print(label_raw)
+    	print("* Generated new labels is:")
+    	print(new_labels)
+    	print("* Recover for the new labels list is:")
+    	print([newIdx2nc(idx-1) for idx in new_labels])
+
+    return new_labels
+
 
 def loading_data(cacheFile):
 
@@ -134,15 +131,15 @@ def loading_data(cacheFile):
 
             label_seg = [ hf["Y_seg/"+str(i)][:] for i in range(len(X)) ]
             # checking the h5py loading process
-	    label_raw = [ hf["label_raw/"+str(i)][:] for i in range(len(X))]
+            label_raw = [ hf["label_raw/"+str(i)][:] for i in range(len(X))]
 
     else:
-	print("Now caching the data ... ")
-        
+        print("Now caching the data ... ")
+
         ds = read_raw_data_sets(FLAGS.data_dir, FLAGS.train_cache,FLAGS.sequence_len, FLAGS.k_mer)
         X, seq_len, label, label_vec, label_seg, label_raw = ds.next_batch(ds._reads_n)
-     
-   
+
+
         with h5py.File(cacheFile, "w") as hf:
 
             hf.create_dataset("X_data", data=X)
@@ -156,31 +153,31 @@ def loading_data(cacheFile):
             hf.create_dataset("Y_ctc/shape", data=label[2])
 
             for i in range(len(label_raw)):
-	
+
 		# problem issues brought by the padding
-                # Note after change to the array, the fusion extra padding is incorporated. 
-		# @@ re-checking data loading part. 
-		hf.create_dataset("Y_seg/"+str(i), data=label_seg[i])
-		hf.create_dataset("label_raw/"+str(i), data=np.array(label_raw[i], dtype=int))
-			
-		
+                # Note after change to the array, the fusion extra padding is incorporated.
+		# @@ re-checking data loading part.
+                hf.create_dataset("Y_seg/"+str(i), data=label_seg[i])
+                hf.create_dataset("label_raw/"+str(i), data=np.array(label_raw[i], dtype=int))
+
+
     print("Data loading Done!")
 
     print("-Start Label transformation")
-    label_vec_new = []  
+    label_vec_new = []
     ## note, this need to be based on label_raw
     for i in range(len(label_raw)):
 
-	newLabels = adjLabelTransform(label_raw[i])
-	newLabelVec = []
+        newLabels = adjLabelTransform(label_raw[i])
+        newLabelVec = []
 
-	# expend for vectors
-	for j in range(len(newLabels)):
-		newLabelVec.extend([ newLabels[j] ] * label_seg[i][j])
-	# do the padding for the rest with 0
-	padding(newLabelVec, len(label_vec[i]), [48]*(len(label_vec[i]-len(newLabelVec))))	
-		
-	label_vec_new.append(newLabelVec)
+        # expend for vectors
+        for j in range(len(newLabels)):
+            newLabelVec.extend([ newLabels[j] ] * label_seg[i][j])
+        # do the padding for the rest with 0
+            padding(newLabelVec, len(label_vec[i]), [48]*(len(label_vec[i]-len(newLabelVec))))
+
+            label_vec_new.append(newLabelVec)
 
     label_new = np.array(label_vec_new)
 
@@ -200,25 +197,25 @@ def getCINstatistics():
     max_len, upbound = 0, 20
     rep_count_dic = {'0':np.zeros(upbound), \
 		     '1':np.zeros(upbound), '2':np.zeros(upbound), '3':np.zeros(upbound), '4':np.zeros(upbound) }
-    
-	# note that currently the label can not be directly used. 
+
+	# note that currently the label can not be directly used.
     for i in range(trainX.shape[0]):
         nc_seq, nc_count = seqCompact(np.array(label_raw[i]).astype(str))
 
         # calculate according statistics
         ind = [ii for ii in range(len(nc_count)) if nc_count[ii] > 1 ]
-        
+
         outline=False
         ## save the information for scraeenin
         for ix in ind:
             if nc_count[ix] > max_len:  max_len = nc_count[ix]
             nc = nc_seq[ix]
             rep_count_dic[nc][nc_count[ix]] += 1
-            
+
 	    # active the tag of print outliners that above 10
             if nc_count[ix] > 10:
                 outline=True
-        
+
         if outline:
             print("-------label_vec -------")
             print(label_vec[i])
@@ -229,30 +226,30 @@ def getCINstatistics():
             print("-------label_raw -------")
             print(label_raw[i])
             print("[%d]\n" %(len(label_raw[i])))
-        	
-	    print(nc_seq)
-	    print(nc_count)
-	  
 
-	    print("*****************************************")
+        print(nc_seq)
+        print(nc_count)
+
+
+        print("*****************************************")
         #ttt = raw_input("Press any key")
 
     print("Max rep len = %d" %(max_len))
-    
-    # barplot 
+
+    # barplot
     X = range(0,max_len)
 
     a_ = plt.bar(X, rep_count_dic['1'][:max_len], color='b', width=0.2)
     c_ = plt.bar([x+0.2 for x in X], rep_count_dic['2'][:max_len], color='g', width=0.2)
     g_ = plt.bar([x+0.4 for x in X], rep_count_dic['3'][:max_len], color='r', width=0.2)
     t_ = plt.bar([x+0.6 for x in X], rep_count_dic['4'][:max_len], color='y', width=0.2)
-    
+
     plt.legend(handles=[a_,t_,g_,c_], labels=["A","T","G","C"], loc='best')
 
     plt.savefig("./Repeative_nc_barplot.png")
 
     #print(rep_count_dic)
-       
+
 # UNet train for the model, non-generator version
 ## define the training data of the model
 def train(lossType="categorical", modelSavePath="../experiment/model/"):
@@ -265,7 +262,7 @@ def train(lossType="categorical", modelSavePath="../experiment/model/"):
     trainY = to_categorical(label_vec_new, num_classes=49)
 
     print(trainX.shape) # fixed length
-    print(trainY.shape) # could be padding with extra 0 in the end part. 
+    print(trainY.shape) # could be padding with extra 0 in the end part.
 
     ########################################
     # loading keras model and train
@@ -285,13 +282,13 @@ def train(lossType="categorical", modelSavePath="../experiment/model/"):
 
     signals = Input(name='input', shape=[trainX.shape[1], 1], dtype=np.float32)
     model = UNet_networkstructure_basic(signals, conv_window_len, maxpooling_len, True, dropoutRate)
-    
+
     fig=plt.figure()
-    
+
     model.compile(optimizer=Adam(lr=lr), loss = 'categorical_crossentropy' , metrics=[metrics.categorical_accuracy])
-    
+
     history = model.fit(trainX, trainY, epochs=50, batch_size=128, verbose=1, callbacks=CB, validation_split=0.2)
-    
+
     print("@ Saving model ...")
 
     model.save(modelSavePath + "/" + model_name + ".h5")
@@ -300,7 +297,7 @@ def train(lossType="categorical", modelSavePath="../experiment/model/"):
     plt.plot(history.history["loss"])
     plt.plot(history.history["val_loss"])
     plt.title("Training curve of the whole training set " + lossType)
-    
+
     plt.savefig(figureSavePath)
     plt.close("all")
 
@@ -311,14 +308,14 @@ def run(args):
     FLAGS = args
     FLAGS.data_dir = FLAGS.data_dir + os.path.sep
     FLAGS.log_dir = FLAGS.log_dir + os.path.sep
-    
+
     print("@ Training U-net model for base-calling ...")
     print("*"*40)
     print(FLAGS)
     print("*"*40)
     print("\n")
 
-    #calucation of the adjacent statistics. 
+    #calucation of the adjacent statistics.
     #getCINstatistics()
 
     ## training the model
@@ -337,7 +334,7 @@ if __name__ == "__main__":
                         help="log directory that store the training model.")
     parser.add_argument('-m', '--model_name', default="devTest", required = False,
                         help='model_name')
-    parser.add_argument('-v', '--validation', default = None, 
+    parser.add_argument('-v', '--validation', default = None,
                         help="validation tfrecord file, default is None, which conduct no validation")
     parser.add_argument('-f', '--tfrecord', default="train.tfrecords",
                         help='tfrecord file')
@@ -364,15 +361,13 @@ if __name__ == "__main__":
 
     parser.set_defaults(retrain=False)
     args = parser.parse_args(sys.argv[1:])
-    
+
     if args.train_cache is None:
         args.train_cache = args.data_dir + '/train_cache_gplabel.hdf5'
     if (args.valid_cache is None) and (args.validation is not None):
         args.valid_cache = args.data_dir + '/valid_cache_gplabel.hdf5'
-    
-    
+
+
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
-    
+
     run(args)
-
-

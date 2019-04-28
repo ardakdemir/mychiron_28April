@@ -25,7 +25,7 @@ def unet_loading_data(cacheFile):
   for seg,raw in zip(label_seg,label_raw):
 
       c= np.count_nonzero(seg==0)
-      if c >0 : 
+      if c >0 :
         raw_mapped = raw
         raw_mapped[-c:] = [pad for i in range(c)]
         y_labels.append(raw_mapped)
@@ -73,15 +73,15 @@ def read_raw_into_segments(signal_folder,seq_length = 300,normalize= "mean",samp
                         x_dat.append(0)
                     x_data.append(x_dat)
                     y_data.append(np.array(y_dat))
-		    lens.update([len(y_dat)])
+                    lens.update([len(y_dat)])
                     x_dat = []
                     y_dat = []
                     current_len = 0
                 else: ## skip the previous segment because it is short or contain too little bases
                     x_dat = []
                     y_dat = []
- 		    print("skipped")
-		    c+=1
+                    print("skipped")
+                    c+=1
                     current_len = 0
                     for i in range(s_base,e_base):
                         x_dat.append(signal_f[i])
@@ -173,7 +173,7 @@ def segmentstonucleotides(segments,y_vec):
 
 if __name__=="__main__":
     args = sys.argv
-    
+
     X, seq_len, label, label_vec, label_seg, label_raw, label_new = unet_loading_data(args[1])
     example_num = 1000
     #dict_file = read_h5(path,filename,example_num = example_num)

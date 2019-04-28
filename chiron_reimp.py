@@ -37,6 +37,7 @@ from tensorflow.python.ops import state_ops
 from tensorflow.python.ops import tensor_array_grad  # pylint: disable=unused-import
 from tensorflow.python.ops import tensor_array_ops
 from tensorflow.python.ops import variables as variables_module
+from my_ctc_utils import *
 import matplotlib
 matplotlib.use('Agg')
 import pickle
@@ -68,73 +69,6 @@ epoch_num = 3
 seq_len = 300
 max_nuc_len = 48
 pickle_path = "toy_data.pk"
-def my_ctc_label_dense_to_sparse(labels, label_lengths):
-      """Converts CTC labels from dense to sparse.
-        Arguments:
-                  labels: dense CTC labels.
-                        label_lengths: length of the labels.
-                          Returns:
-                                    A sparse tensor representation of the labels.
-                                      """
-                                        label_shape = array_ops.shape(labels)
-                                          num_batches_tns = array_ops.stack([label_shape[0]])
-                                            max_num_labels_tns = array_ops.stack([label_shape[1]])
-
-                                              def range_less_than(_, current_input):
-                                                      return array_ops.expand_dims(
-                                                                      math_ops.range(label_shape[1]), 0) < array_ops.fill(
-                                                                                          max_num_labels_tns, current_input)
-
-                                                                        init = math_ops.cast(
-                                                                                      array_ops.fill([1, label_shape[1]], 0), dtypes_module.bool)
-                                                                          dense_mask = functional_ops.scan(
-                                                                                        range_less_than, label_lengths, initializer=init, parallel_iterations=1)
-                                                                            dense_mask = dense_mask[:, 0, :]
-
-                                                                              label_array = array_ops.reshape(
-                                                                                            array_ops.tile(math_ops.range(0, label_shape[1]), num_batches_tns),
-                                                                                                  label_shape)
-                                                                                label_ind = array_ops.boolean_mask(label_array, dense_mask)
-
-                                                                                  batch_array = array_ops.transpose(
-                                                                                                array_ops.reshape(
-                                                                                                              array_ops.tile(math_ops.range(0, label_shape[0]), max_num_labels_tns),
-                                                                                                                        reverse(label_shape, 0)))
-                                                                                                  batch_ind = array_ops.boolean_mask(batch_array, dense_mask)
-                                                                                                    indices = array_ops.transpose(
-                                                                                                                  array_ops.reshape(concatenate([batch_ind, label_ind], axis=0), [2, -1]))
-
-                                                                                                      vals_sparse = array_ops.gather_nd(labels, indices)
-
-                                                                                                        return sparse_tensor.SparseTensor(
-                                                                                                                      math_ops.to_int64(indices), vals_sparse, math_ops.to_int64(label_shape))
-
-                                                                                                        def my_ctc_batch_cost(y_true, y_pred, input_length, label_length):
-                                                                                                              """Runs CTC loss algorithm on each batch element.
-                                                                                                                Arguments:
-                                                                                                                          y_true: tensor `(samples, max_string_length)`
-                                                                                                                                    containing the truth labels.
-                                                                                                                                          y_pred: tensor `(samples, time_steps, num_categories)`
-                                                                                                                                                    containing the prediction, or output of the softmax.
-                                                                                                                                                          input_length: tensor `(samples, 1)` containing the sequence length for
-                                                                                                                                                                    each batch item in `y_pred`.
-                                                                                                                                                                          label_length: tensor `(samples, 1)` containing the sequence length for
-                                                                                                                                                                                    each batch item in `y_true`.
-                                                                                                                                                                                      Returns:
-                                                                                                                                                                                            Tensor with shape (samples,1) containing the
-                                                                                                                                                                                                      CTC loss of each element.
-                                                                                                                                                                                                        """
-                                                                                                                                                                                                          label_length = math_ops.to_int32(array_ops.squeeze(label_length, axis=-1))
-                                                                                                                                                                                                            input_length = math_ops.to_int32(array_ops.squeeze(input_length, axis=-1))
-                                                                                                                                                                                                              sparse_labels = math_ops.to_int32(
-                                                                                                                                                                                                                            my_ctc_label_dense_to_sparse(y_true, label_length))
-
-                                                                                                                                                                                                                y_pred = math_ops.log(array_ops.transpose(y_pred, perm=[1, 0, 2]) + epsilon())
-
-                                                                                                                                                                                                                  return array_ops.expand_dims(
-                                                                                                                                                                                                                        ctc.ctc_loss(
-                                                                                                                                                                                                                                  inputs=y_pred, labels=sparse_labels, sequence_length=input_length,ctc_merge_repeated=False), 1)
-
 
 # #max_nuc_len is interesting
 def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = 48):
@@ -181,14 +115,14 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
         print("Reading raw data")
         x_tr, y_labels , label_lengths,max_label_length= read_raw_into_segments(test_name,seq_length = seq_len, sample_num = sample_num,y_pad = 4)
         print(y_labels[:100])
-	print("Number of segments used for testing: %d"%len(x_tr))
+        print("Number of segments used for testing: %d"%len(x_tr))
     else:
         #h5_dict = read_h5(test_folder,test_name,example_num = test_size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = test_size , class_num = 5 , seq_len = 300 ,padding = True)
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
         #print("Reading h5 data")
         #print(len(x_tr[0]))
-        
+
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
@@ -334,7 +268,7 @@ def chiron_bilstm_layer(inputs,hidden_num):
 # Define CTC loss
 def ctc_lambda_func(args):
     y_pred, labels, input_length, label_length = args
-    return K.ctc_batch_cost(labels, y_pred, input_length, label_length)
+    return my_ctc_batch_cost(labels, y_pred, input_length, label_length)
 
 def ctc_predict(model,inputs,beam_width = 100, top_paths = 1):
     lens = lambda l :list(map (lambda x:len(x),l))
@@ -393,7 +327,7 @@ def train():
     all_model = create_model(input_shape=input_shape,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = max_nuc_len)
     inputs,input_length,outputs,outputs2,dense,preds,labels,input_length,label_length,loss_out,model = all_model
     flattened_input_x_width = keras.backend.squeeze(input_length, axis=-1)
-    top_k_decoded, _ = K.ctc_decode(preds, flattened_input_x_width)
+    top_k_decoded, _ = my_ctc_decode(preds, flattened_input_x_width)
     decoder = K.function([inputs, flattened_input_x_width], [top_k_decoded[0]])
     #model3 = Model(inputs= [inputs,labels,input_length,label_length],outputs=loss_out)
     model.summary()
@@ -417,7 +351,7 @@ def train():
 	  #plt.title("Training curve of the whole training set " + lossType)
     plt.savefig(figureSavePath)
     plt.close("all")
-	
+
 def run_train(args):
     global FLAGS
     FLAGS = args

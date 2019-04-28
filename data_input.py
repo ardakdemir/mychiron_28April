@@ -16,12 +16,12 @@ import tempfile
 
 import h5py
 import numpy as np
-from statsmodels import robust
+#from statsmodels import robust
 from six.moves import range
 from six.moves import zip
 import tensorflow as tf
-from chiron.utils import progress
-from chiron.chiron_input import read_raw_data_sets
+#from chiron.utils import progress
+#from chiron.chiron_input import read_raw_data_sets
 
 
 import matplotlib
@@ -49,10 +49,10 @@ class biglist(object):
     biglist class, read into memory if reads number < MAXLEN, otherwise read into a hdf5 file.
     """
 
-    def __init__(self, 
-                 data_handle, 
-				 dtype='float32', 
-				 length=0, 
+    def __init__(self,
+                 data_handle,
+				 dtype='float32',
+				 length=0,
 				 cache=False,
                  max_len=1e5):
         self.handle = data_handle
@@ -128,12 +128,12 @@ class biglist(object):
 class DataSet(object):
     def __init__(self, event, event_length, label, label_length, label_vec, label_segs, for_eval=False,):
         """Custruct a DataSet."""
-        
+
         if for_eval == False:
             assert len(event) == len(label) and len(event_length) == len(label_length) and len(event) == len(event_length), "Sequence length for event \
             and label does not of event and label should be same, \
             event:%d , label:%d" % (len(event), len(label))
-        
+
         self._event = event
         self._event_length = event_length
         self._label = label
@@ -193,11 +193,11 @@ class DataSet(object):
     def read_into_memory(self, index):
         event = np.asarray(list(zip([self._event[i] for i in index],
                                     [self._event_length[i] for i in index])))
-        
+
         if not self.for_eval:
             label = np.asarray(list(zip([self._label[i] for i in index],
                                         [self._label_length[i] for i in index])))
-            
+
             label_vec = np.asarray(list(zip([self._label_vec[i] for i in index],
                                         [self._label_segs[i] for i in index])))
 
@@ -221,14 +221,14 @@ class DataSet(object):
 
         if self.epochs_completed>=1 and self.for_eval:
             print("Warning, evaluation dataset already finish one iteration.")
-        
+
         start = self._index_in_epoch
         # Shuffle for the first epoch
-        
+
         if self._epochs_completed == 0 and start == 0:
             if shuffle:
                 np.random.shuffle(self._perm)
-        
+
         # Go to the next epoch
         if start + batch_size > self.reads_n:
             # Finished epoch
@@ -236,7 +236,7 @@ class DataSet(object):
             # Get the rest samples in this epoch
             rest_reads_n = self.reads_n - start
             event_rest_part, label_rest_part, label_vec_rest_part = self.read_into_memory(self._perm[start:self._reads_n])
-            
+
             start = 0
             if self._for_eval:
                 event_batch = event_rest_part
@@ -252,12 +252,12 @@ class DataSet(object):
                 self._index_in_epoch = batch_size - rest_reads_n
                 end = self._index_in_epoch
                 event_new_part, label_new_part, label_vec_new_part = self.read_into_memory(self._perm[start:end])
-                
+
                 if event_rest_part.shape[0] == 0:
                     event_batch = event_new_part
                     label_batch = label_new_part
                     label_vec_batch = label_vec_new_part
-                    
+
                 elif event_new_part.shape[0] == 0:
                     event_batch = event_rest_part
                     label_batch = label_rest_part
@@ -270,24 +270,24 @@ class DataSet(object):
             self._index_in_epoch += batch_size
             end = self._index_in_epoch
             event_batch, label_batch, label_vec_batch = self.read_into_memory(self._perm[start:end])
-        
+
         label_segs = [ x  for x in label_vec_batch[:,1] ]
         label_raw = [ x for x in label_batch[:,0]]
 
         if not self._for_eval:
             label_batch = batch2sparse(label_batch)
-        
+
         seq_length = event_batch[:, 1].astype(np.int32)
-       
-        
+
+
         return np.vstack(event_batch[:, 0]).astype(np.float32), seq_length, label_batch, \
                 np.vstack(label_vec_batch[:,0]).astype(np.int32), label_segs, label_raw
 
 
-def read_data_for_eval(file_path, 
+def read_data_for_eval(file_path,
 					   start_index=0,
-                       step=20, 
-	                   seg_length=200, 
+                       step=20,
+	                   seg_length=200,
                        sig_norm=True,
                        reverse = False):
     """
@@ -317,10 +317,10 @@ def read_data_for_eval(file_path,
             padding(segment_sig, seg_length)
             event.append(segment_sig)
             event_len.append(segment_len)
-        evaluation = DataSet(event=event, 
-							 event_length=event_len, 
+        evaluation = DataSet(event=event,
+							 event_length=event_len,
 							 label=label,
-                             label_length=label_len, 
+                             label_length=label_len,
 							 for_eval=True)
     return evaluation
 
@@ -340,7 +340,7 @@ def read_cache_dataset(h5py_file_path):
     label_len = len(label_h)
     assert len(event_h) == len(event_length_h)
     assert len(label_h) == len(label_length_h)
-    
+
     event = biglist(data_handle=event_h, length=event_len, cache=True)
     event_length = biglist(data_handle=event_length_h, length=event_len,
                            cache=True)
@@ -354,9 +354,9 @@ def read_cache_dataset(h5py_file_path):
                    label_length=label_length, label_vec = label_vec, label_segs= label_seg)
 
 
-## Read from raw data    
+## Read from raw data
 def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, max_segments_num=FLAGS.max_segments_number):
-    
+
     # make temp record
     if h5py_file_path is None:
         h5py_file_path = tempfile.mkdtemp() + '/temp_record.hdf5'
@@ -367,22 +367,22 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
             pass
         if not os.path.isdir(os.path.dirname(os.path.abspath(h5py_file_path))):
             os.mkdir(os.path.dirname(os.path.abspath(h5py_file_path)))
-    
-    
+
+
     with h5py.File(h5py_file_path, "a") as hdf5_record:
-        
+
         event_h = hdf5_record.create_dataset('event/record', dtype='float32', shape=(0, seq_length), maxshape=(None, seq_length))
         event_length_h = hdf5_record.create_dataset('event/length', dtype='int32', shape=(0,), maxshape=(None,), chunks=True)
-        
+
         label_h = hdf5_record.create_dataset('label/record', dtype='int32',shape=(0, 0), maxshape=(None, seq_length))
         label_length_h = hdf5_record.create_dataset('label/length',dtype='int32', shape=(0,), maxshape=(None,))
-        
+
         label_vec_h = hdf5_record.create_dataset('label/record_vec', dtype='int32',shape=(0, seq_length), maxshape=(None, seq_length))
         label_segs_h = hdf5_record.create_dataset('label/record_seg', dtype='int32',shape=(0, 0), maxshape=(None, seq_length))
 
         event = biglist(data_handle=event_h, max_len=FLAGS.MAXLEN)
         event_length = biglist(data_handle=event_length_h, max_len=FLAGS.MAXLEN)
-        
+
         label = biglist(data_handle=label_h, max_len=FLAGS.MAXLEN)
         label_length = biglist(data_handle=label_length_h, max_len=FLAGS.MAXLEN)
         label_vec = biglist(data_handle=label_vec_h, max_len=FLAGS.MAXLEN)
@@ -390,12 +390,12 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
 
         count = 0
         file_count = 0
-        
+
         for name in os.listdir(data_dir):
-            
+
             if name.endswith(".signal"):
                 file_pre = os.path.splitext(name)[0]
-                
+
                 f_signal = read_signal(data_dir + name)
 
                 if len(f_signal) == 0:
@@ -410,7 +410,7 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
 
                 # read_raw singals, it will be segmented into (event, label)
                 tmp_event, tmp_event_length, tmp_label, tmp_label_length, tmp_label_vec, tmp_label_segs = read_raw(f_signal, f_label, seq_length)
-                
+
                 event += tmp_event
                 event_length += tmp_event_length
 
@@ -418,7 +418,7 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
                 label_length += tmp_label_length
                 label_vec += tmp_label_vec
                 label_segs += tmp_label_segs
-                
+
                 del tmp_event
                 del tmp_event_length
                 del tmp_label
@@ -426,14 +426,14 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
                 del tmp_label_vec
                 del tmp_label_segs
 
-                
+
                 count = len(event)
-                
+
                 if file_count % 10 == 0:
-                    
+
                     if max_segments_num is not None:
                         sys.stdout.write("%d/%d events read.   \n" % (count, max_segments_num))
-                        
+
                         if len(event) > max_segments_num:
                             event.resize(max_segments_num)
                             label.resize(max_segments_num)
@@ -442,7 +442,7 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
 
                             event_length.resize(max_segments_num)
                             label_length.resize(max_segments_num)
-                            
+
                             break
                     else:
                         sys.stdout.write("%d lines read.   \n" % (count))
@@ -458,67 +458,67 @@ def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, m
 
 
 def read_signal(file_path, normalize="median"):
-    
+
     f_h = open(file_path, 'r')
     signal = list()
-    
+
     for line in f_h:
         signal += [float(x) for x in line.split()]
     signal = np.asarray(signal)
-    
+
     if len(signal) == 0:
         return signal.tolist()
-    
+
     if normalize == "mean":
         signal = (signal - np.mean(signal)) / np.float(np.std(signal))
-    
+
     elif normalize == "median":
         signal = (signal - np.median(signal)) / np.float(robust.mad(signal))
-    
+
     return signal.tolist()
 
 
 def read_label(file_path, skip_start=10, window_n=0):
-    
+
     f_h = open(file_path, 'r')
     start = list()
     length = list()
     base = list()
     all_base = list()
-    
+
     if skip_start < window_n:
         skip_start = window_n
-    
+
     for line in f_h:
         record = line.split()
         all_base.append(base2ind(record[2]))
-    
+
     f_h.seek(0, 0)  # Back to the start
     file_len = len(all_base)
-    
+
     for count, line in enumerate(f_h):
-        
+
         record = line.split()
-        
+
         if count < skip_start or count > (file_len - skip_start - 1):
             continue
-        
+
         start.append(int(record[0]))
         length.append(int(record[1]) - int(record[0]))
-        
+
         k_mer = 0
-        
+
         for i in range(window_n * 2 + 1):
             k_mer = k_mer * 4 + all_base[count + i - window_n]
         base.append(k_mer)
-    
+
     return raw_labels(start=start, length=length, base=base)
 
 
 
 # joint loading, can revise here
 def read_raw(raw_signal, raw_label, max_seq_length):
-    
+
     label_val = list()
     label_length = list()
     label_val_vec = list()
@@ -526,16 +526,16 @@ def read_raw(raw_signal, raw_label, max_seq_length):
 
     event_val = list()
     event_length = list()
-    
+
     current_length = 0
     current_label = []
     current_event = []
     current_label_vec = []
     current_segs = []
 
-    
+
     for indx, segment_length in enumerate(raw_label.length):
-        
+
         current_start = raw_label.start[indx]
         current_base = raw_label.base[indx]
 
@@ -562,7 +562,7 @@ def read_raw(raw_signal, raw_label, max_seq_length):
 
                 event_val.append(current_event)
                 event_length.append(current_length)
-                
+
                 # add to the list
                 label_val.append(current_label)
                 label_length.append(len(current_label))
@@ -573,7 +573,7 @@ def read_raw(raw_signal, raw_label, max_seq_length):
             current_event = raw_signal[current_start:current_start + segment_length]
             current_length = segment_length
             current_label = [current_base]
-            
+
             current_label_vec = [current_base] * segment_length
             current_segs = [segment_length]
 
@@ -636,15 +636,15 @@ def base2ind(base, alphabet_n=5, base_n=1):
     if base.isdigit():
         return int(base) / 256
     if ord(base) < 97:
-        return Alphabeta.index(base) 
+        return Alphabeta.index(base)
     else:
-        return alphabeta.index(base) 
+        return alphabeta.index(base)
 
 def ind2base(indList):
 
     strList = []
     Alphabeta = ['A', 'C', 'G', 'T', 'X']
-    
+
     for idx in indList:
         strList.append(Alphabeta[idx])
 
@@ -656,11 +656,11 @@ def main():
     Data_dir = '/data/workspace/nanopore/data/chiron_data/train/'
     #train = read_tfrecord(Data_dir,"train.tfrecords",seq_length=1000)
     eval = read_raw_data_sets(Data_dir)
-    
+
     for i in range(5):
         inputX, sequence_length, label, label_vec, label_seg = eval.next_batch(1)
         bks = np.cumsum(label_seg[0])
-        
+
         print(inputX.shape)
         print(label[2])
         print(label_vec.shape)
@@ -685,11 +685,10 @@ def main():
             plt.xticks(bks[:-1], ind2base(label[1]), color="brown",fontsize=26)
             for bk in bks:
                 plt.axvline(bk, linestyle="-.", color="red")
-            
+
             plt.savefig("/dropbox/currency"+str(i)+".png")
             plt.close("all")
 
 
 if __name__ == '__main__':
     main()
-

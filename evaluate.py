@@ -15,7 +15,7 @@ def editDistance(s1,s2):
 		for i1,c1 in enumerate(s1):
 			if  c1==c2:
 				distances_.append(distances[i1])
-			else: 
+			else:
 				distances_.append(1+min(distances[i1],distances[i1+1],distances_[-1]))
 		distances = distances_
 	return distances[-1]/float(len(s2))
@@ -25,9 +25,9 @@ def editDistance(s1,s2):
 def norm_edit_distance(pred,truth):
     edits = [[0 for i in range(len(truth)+1)]for j in range(len(pred)+1)]
     for i in range(len(truth)+1):
-	edits[0][i]=i
+        edits[0][i]=i
     for j in range(len(pred)+1):
-	edits[j][0]=j
+        edits[j][0]=j
     for i in range(0,len(pred)):
         for j in range(0,len(truth)):
             if pred[i]==truth[j]:
@@ -58,6 +58,3 @@ def evaluate_preds2(preds,truths):
         distances.append(norm_dist)
     stats = get_stats(distances)
     return stats
-
-
-
