@@ -122,7 +122,6 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
         #print("Reading h5 data")
         #print(len(x_tr[0]))
-
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
@@ -138,7 +137,6 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
         model = load_model(model_path)
         layer_name = 'softmax'
         preds = Model(inputs=model.input,outputs=model.get_layer(layer_name).output)
-
         #preds = K.function([model.input],
         #                          [model.get_layer(layer_name).output])
     else:
@@ -148,7 +146,7 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
     #preds.summary()
     ##read data from h5 file
     flattened_input_x_width = keras.backend.squeeze(input_length, axis=-1)
-    top_k_decoded, _ = K.ctc_decode(preds, flattened_input_x_width,greedy=False,
+    top_k_decoded, _ = my_ctc_decode(preds, flattened_input_x_width,greedy=False,
     beam_width=50,
     top_paths=1)
     decoder = K.function([inputs, flattened_input_x_width], [top_k_decoded[0]])
