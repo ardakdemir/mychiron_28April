@@ -82,9 +82,10 @@ def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_laye
     inputs = Input(shape=input_shape)
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     seq_len = tf.placeholder(tf.int32, shape=[batch_size])
+    training = tf.placeholder(tf.bool)
     outputs = chiron_cnn(inputs,cnn_filter_num,1,window_len,res_layers = res_layers)
     #outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
-    outputs2 = my_rnn_layers(outputs,seq_len,hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
+    outputs2 = my_rnn_layers(outputs,seq_len,training,hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
     dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
     dense2 =  TimeDistributed(Dense(class_num))(dense)
     preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
@@ -260,7 +261,7 @@ def chiron_res_layer(inputs,filternum1,filtersize1,filtersize2,activation = 'rel
 
 def my_rnn_layers(x,
                seq_length,
-               training=True,
+               training,
                hidden_num=200,
                layer_num=5,
                class_n=5,
