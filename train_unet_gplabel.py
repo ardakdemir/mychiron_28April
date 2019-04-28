@@ -177,7 +177,7 @@ def loading_data(cacheFile):
         # do the padding for the rest with 0
             padding(newLabelVec, len(label_vec[i]), [48]*(len(label_vec[i]-len(newLabelVec))))
 
-            label_vec_new.append(newLabelVec)
+        label_vec_new.append(newLabelVec)
 
     label_new = np.array(label_vec_new)
 
