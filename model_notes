@@ -1,0 +1,4 @@
+300 length window,
+the window was slided by 30,
+batch size equal to 1,100
+ctc_decode da merge repeated True olarak cagirilmis
