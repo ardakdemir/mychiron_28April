@@ -14,10 +14,10 @@ import time, os, random, sys
 import re, random
 import h5py
 
-import pysam, pyfaidx, pyBigWig
+#import pysam, pyfaidx, pyBigWig
 
-from rpy2.robjects.packages import importr
-import rpy2.robjects as robjects
+#from rpy2.robjects.packages import importr
+#import rpy2.robjects as robjects
 
 import matplotlib
 matplotlib.use('Agg')  # this need for the linux env
@@ -33,7 +33,7 @@ import tensorflow as tf
 from keras import backend as K
 
 ## this part is make the reproducible of the CPU version
-print "@ Setting randomness fixed ...."
+print ("@ Setting randomness fixed ....")
 os.environ['PYTHONHASHSEED'] = '0'
 np.random.seed(config.DATABASE["rand_seed"])
 random.seed(config.DATABASE["rand_seed"])
@@ -47,7 +47,7 @@ sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
 K.set_session(sess)
 """
 
-print "- Random seed set [DONE]!! (*not work for the GPU training)"
+print ("- Random seed set [DONE]!! (*not work for the GPU training)")
 
 date_stamp = time.strftime("%Y%m%d_%H.%M")
 
@@ -95,34 +95,34 @@ def get_blackList_regions():
 			L = line.strip().split()
 
 			if(len(L) != 3):
-				print "[Warning]: Please check the format of black list files!!"
+				print ("[Warning]: Please check the format of black list files!!")
 				exit(-1)
 
 			rgs.append((str(L[0]), int(L[1]), int(L[2])))
-	
+
 	return rgs
 
-###############################################################	
+###############################################################
 
 def normChrName(rg, withChr=0):
- 
-    chrName = str(rg[0]).lower()  
-    if re.search("chr", chrName) is not None:
-        if withChr == 0:
-		    chrName = chrName.replace("chr", "")
-    else:
-	    if withChr != 0:
-	        chrName = "chr" + chrName
-    
-    rg = list(rg)
-    rg[0] = chrName
-    
-    return tuple(rg)
+
+	chrName = str(rg[0]).lower()
+	if re.search("chr", chrName) is not None:
+		if withChr == 0:
+			chrName = chrName.replace("chr", "")
+	else:
+		if withChr != 0:
+			chrName = "chr" + chrName
+
+	rg = list(rg)
+	rg[0] = chrName
+
+	return tuple(rg)
 
 
 def normChrStrName(chrName, withChr=0):
-	
-        chrName = str(chrName).lower()
+
+	chrName = str(chrName).lower()
 
 	if re.search("chr", chrName) is not None:
 		if withChr == 0:
@@ -148,7 +148,7 @@ def estimate_sampleSize(binSize=1000):
 
 	print("* Original nucleotide %d bp" %(total_nc))
 	print ("* After bin sizing %d bins" %(total_nc/binSize))
-	print chr_bp/total_nc
+	#print chr_bp/total_nc
 	print("===================================================")
 
 
@@ -165,12 +165,12 @@ def estimate_sampleSize(binSize=1000):
 	print("* Original nucleotide %d bp" %(total_nc))
 	print ("* After bin sizing %d bins" %(total_nc/binSize))
 	print("--------------------------------------------------")
-	print "Chr\tPercentage\tCum-percentage "
+	print ("Chr\tPercentage\tCum-percentage ")
 	print("--------------------------------------------------")
 	cum = 0
 	for chrome, per in sorted(chr_bp.items(), key=lambda kv:kv[1], reverse=True ):
 		cum += per/total_nc * 100
-		print chrome, "\t", np.around(per/total_nc * 100, 2), "\t", np.around(cum, 2)  
+		#print (chrome, "\t", np.around(per/total_nc * 100, 2), "\t", np.around(cum, 2)  )
 	print("===================================================")
 
 
@@ -185,5 +185,3 @@ def check_all_zero(x):
 
 if __name__ == "__main__":
 	estimate_sampleSize(100)
-
-

@@ -10,11 +10,11 @@ from keras.optimizers import RMSprop,SGD, Adam
 from keras import callbacks, losses
 from keras import backend as K
 from keras.utils import to_categorical
-from keras_contrib.layers import CRF
+#from keras_contrib.layers import CRF
 
 import config
 
-from model_prediction import *
+from models.model_prediction import *
 from chiron_input import batch2sparse
 
 #################################################

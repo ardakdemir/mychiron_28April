@@ -10,7 +10,7 @@ from keras.optimizers import RMSprop,SGD, Adam
 from keras import callbacks, losses
 from keras import backend as K
 from keras.utils import to_categorical
-from keras_contrib.layers import CRF
+#from keras_contrib.layers import CRF
 
 
 ########################################
@@ -34,20 +34,20 @@ def editDistance(s1, s2):
 
 
 def toBases(logits, seq_len = None):
-    
+
     idx = 0
     seq, count = [], []
-    
+
     if seq_len == None:
         seq_len = len(logits)
 
     while(idx < seq_len):
         current = logits[idx]
         tmp_count = 1
-        while( idx + 1 < seq_len and logits[idx+1] == current ): 
+        while( idx + 1 < seq_len and logits[idx+1] == current ):
             idx += 1
             tmp_count += 1
-            
+
         seq.append(current)
         count.append(tmp_count)
         idx += 1
@@ -68,6 +68,3 @@ if __name__ == "__main__":
     gold =   [0, 1, 0, 1, 2, 2 ]
 
     print(ed(logits, 6, gold))
-
-
-

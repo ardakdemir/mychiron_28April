@@ -16,11 +16,11 @@ import tempfile
 
 import h5py
 import numpy as np
-from statsmodels import robust
+#from statsmodels import robust
 from six.moves import range
 from six.moves import zip
 import tensorflow as tf
-from chiron.utils import progress
+#from chiron.utils import progress
 from chiron.chiron_input import read_raw_data_sets
 
 raw_labels = collections.namedtuple('raw_labels', ['start', 'length', 'base'])
@@ -41,10 +41,10 @@ class biglist(object):
     biglist class, read into memory if reads number < MAXLEN, otherwise read into a hdf5 file.
     """
 
-    def __init__(self, 
-                 data_handle, 
-				 dtype='float32', 
-				 length=0, 
+    def __init__(self,
+                 data_handle,
+				 dtype='float32',
+				 length=0,
 				 cache=False,
                  max_len=1e5):
         self.handle = data_handle
@@ -249,10 +249,10 @@ class DataSet(object):
             np.float32), seq_length, label_batch
 
 
-def read_data_for_eval(file_path, 
+def read_data_for_eval(file_path,
 					   start_index=0,
-                       step=20, 
-	                   seg_length=200, 
+                       step=20,
+	                   seg_length=200,
                        sig_norm=True,
                        reverse = False):
     """
@@ -282,10 +282,10 @@ def read_data_for_eval(file_path,
             padding(segment_sig, seg_length)
             event.append(segment_sig)
             event_len.append(segment_len)
-        evaluation = DataSet(event=event, 
-							 event_length=event_len, 
+        evaluation = DataSet(event=event,
+							 event_length=event_len,
 							 label=label,
-                             label_length=label_len, 
+                             label_length=label_len,
 							 for_eval=True)
     return evaluation
 
@@ -313,11 +313,11 @@ def read_cache_dataset(h5py_file_path):
                    label_length=label_length)
 
 
-def read_tfrecord(data_dir, 
-                  tfrecord, 
-                  h5py_file_path=None, 
-                  seq_length=300, 
-                  k_mer=1, 
+def read_tfrecord(data_dir,
+                  tfrecord,
+                  h5py_file_path=None,
+                  seq_length=300,
+                  k_mer=1,
                   max_segments_num=None):
     ###Read from raw data
     count_bar = progress.multi_pbars("Extract tfrecords")
@@ -351,21 +351,21 @@ def read_tfrecord(data_dir,
         record_iterator = tf.python_io.tf_record_iterator(path=tfrecords_filename)
 
         for string_record in record_iterator:
-            
+
             example = tf.train.Example()
             example.ParseFromString(string_record)
-            
+
             raw_data_string = (example.features.feature['raw_data']
                                           .bytes_list
                                           .value[0])
-            
+
             features_string = (example.features.feature['features']
                                         .bytes_list
                                         .value[0])
             fn_string = (example.features.feature['fname'].bytes_list.value[0])
 
             raw_data = np.fromstring(raw_data_string, dtype=np.int16)
-            
+
             features_data = np.fromstring(features_string, dtype='S8')
             # grouping the whole array into sub-array with size = 3
             group_size = 3
@@ -411,7 +411,7 @@ def read_tfrecord(data_dir,
             train = DataSet(event=event, event_length=event_length, label=label, label_length=label_length)
         count_bar.end()
         return train
-            
+
 def read_raw_data_sets(data_dir, h5py_file_path=None, seq_length=300, k_mer=1, max_segments_num=FLAGS.max_segments_number):
     ###Read from raw data
     if h5py_file_path is None:
@@ -576,7 +576,7 @@ def read_raw(raw_signal, raw_label, max_seq_length):
     current_length = 0
     current_label = []
     current_event = []
-    
+
     for indx, segment_length in enumerate(raw_label.length):
         current_start = raw_label.start[indx]
         current_base = raw_label.base[indx]
@@ -660,7 +660,7 @@ def main():
     Data_dir = '/data/workspace/nanopore/data/chiron_data/code_dev_sample/'
     #train = read_tfrecord(Data_dir,"train.tfrecords",seq_length=1000)
     eval = read_raw_data_sets(Data_dir)
-    
+
     for i in range(1):
         inputX, sequence_length, label = eval.next_batch(10)
 
@@ -677,4 +677,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

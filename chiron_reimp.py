@@ -34,9 +34,14 @@ from tensorflow.python.ops import random_ops
 from tensorflow.python.ops import resource_variable_ops
 from tensorflow.python.ops import sparse_ops
 from tensorflow.python.ops import state_ops
+from tensorflow.contrib.rnn.python.ops.rnn import stack_bidirectional_dynamic_rnn
+from tensorflow.contrib.rnn.python.ops.core_rnn_cell import RNNCell
 from tensorflow.python.ops import tensor_array_grad  # pylint: disable=unused-import
 from tensorflow.python.ops import tensor_array_ops
 from tensorflow.python.ops import variables as variables_module
+from lstm import *
+from variable import *
+import tensorflow as tf
 from my_ctc_utils import *
 import matplotlib
 matplotlib.use('Agg')
@@ -53,7 +58,8 @@ import datetime
 import argparse
 from evaluate import evaluate_preds,evaluate_preds2,editDistance
 
-from read_data import read_h5,read_from_dict, split_data,read_raw_into_segments,unet_loading_data
+from read_data import read_h5,read_from_dict, split_data,read_raw_into_segments
+from read_data import unet_loading_data
 
 n = 300000
 test_size = n/10
@@ -248,6 +254,53 @@ def chiron_res_layer(inputs,filternum1,filtersize1,filtersize2,activation = 'rel
     y = Activation(activation)(y)
     return y
 
+def my_rnn_layers(x,
+               seq_length,
+               training,
+               hidden_num=100,
+               layer_num=3,
+               class_n=5,
+               cell='LSTM',
+               dtype = tf.float32):
+    """Generate RNN layers.
+
+    Args:
+        x (Float): A 3D-Tensor of shape [batch_size,max_time,channel]
+        seq_length (Int): A 1D-Tensor of shape [batch_size], real length of each sequence.
+        training (Boolean): A 0D-Tenosr indicate if it's in training.
+        hidden_num (int, optional): Defaults to 100. Size of the hidden state,
+            hidden unit will be deep concatenated, so the final hidden state will be size of 200.
+        layer_num (int, optional): Defaults to 3. Number of layers in RNN.
+        class_n (int, optional): Defaults to 5. Number of output class.
+        cell(str): A String from 'LSTM','GRU','BNLSTM', the RNN Cell used.
+            BNLSTM stand for Batch normalization LSTM Cell.
+
+    Returns:
+         logits: A 3D Tensor of shape [batch_size, max_time, class_n]
+    """
+
+    cells_fw = list()
+    cells_bw = list()
+    for i in range(layer_num):
+        if cell == 'LSTM':
+            cell_fw = LSTMCell(hidden_num)
+            cell_bw = LSTMCell(hidden_num)
+        elif cell == 'GRU':
+            cell_fw = GRUCell(hidden_num)
+            cell_bw = GRUCell(hidden_num)
+        elif cell == 'BNLSTM':
+            cell_fw = BNLSTMCell(hidden_num,training = training)
+            cell_bw = BNLSTMCell(hidden_num,training = training)
+        else:
+            raise ValueError("Cell type unrecognized.")
+        cells_fw.append(cell_fw)
+        cells_bw.append(cell_bw)
+    #multi_cells_fw = tf.nn.rnn_cell.MultiRNNCell(cells_fw)
+    #multi_cells_bw = tf.nn.rnn_cell.MultiRNNCell(cells_bw)
+    with tf.variable_scope('BDLSTM_rnn') as scope:
+        lasth,_,_ = stack_bidirectional_dynamic_rnn(
+                cells_fw=cells_fw, cells_bw=cells_bw, inputs=x, sequence_length=seq_length, dtype=dtype, scope=scope)
+    return lasth
 def chiron_rnn(inputs,hidden_num =200,rnn_layers = 3,class_num = class_num ):
     x = inputs
     for i in range(rnn_layers):
@@ -306,7 +359,6 @@ def train():
         x_tr, y_labels , label_lengths,max_label_length= read_raw_into_segments(inputpath,seq_length = seq_len, sample_num = size,y_pad = 4)
         x_tr = np.array(x_tr).reshape(len(x_tr),seq_len,1)
     else:
-
         #return X, seq_len, label, label_vec, label_seg, label_raw
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
