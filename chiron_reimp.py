@@ -75,14 +75,15 @@ def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_laye
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     outputs = chiron_cnn(inputs,cnn_filter_num,1,window_len,res_layers = res_layers)
     outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
-    dense =  TimeDistributed(Dense(class_num))(outputs2)
-    preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense)
+    dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
+    dense2 =  TimeDistributed(Dense(class_num))(dense)
+    preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
     labels = Input(name='the_labels', shape=[max_nuc_len], dtype='int32')
     input_length = Input(name='input_length', shape=[1], dtype='int32')
     label_length = Input(name='label_length', shape=[1], dtype='int32')
     loss_out = Lambda(ctc_lambda_func, output_shape=(1,), name='ctc')([preds,labels,input_length,label_length])
     model3 = Model(inputs= [inputs,labels,input_length,label_length],outputs=loss_out)
-    return inputs,input_length,outputs,outputs2,dense,preds,labels,input_length,label_length,loss_out,model3
+    return inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model3
 
 def delete_blanks(preds,key = -1):
     deleted_preds = []
@@ -139,7 +140,7 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
         #preds = K.function([model.input],
         #                          [model.get_layer(layer_name).output])
     else:
-        inputs,input_length,outputs,outputs2,dense,preds,labels,input_length,label_length,loss_out,model = create_model(rnn_layers=rnn_layers)
+        inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = create_model(rnn_layers=rnn_layers)
         model.load_weights(model_path)
     #model.summary()
     #preds.summary()
@@ -255,7 +256,7 @@ def chiron_rnn(inputs,hidden_num =200,rnn_layers = 3,class_num = class_num ):
     #x = FC(x)
     return x
 def chiron_bilstm_layer(inputs,hidden_num):
-    firstbi = Bidirectional(LSTM(hidden_num, return_sequences=True),
+    firstbi = Bidirectional(LSTM(hidden_num, return_sequences=True,activation=None),
                         input_shape=inputs.shape)
     x = inputs
     x = firstbi(x)
@@ -324,7 +325,7 @@ def train():
     print(max_nuc_len)
     print(y_labels[0])
     all_model = create_model(input_shape=input_shape,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = max_nuc_len)
-    inputs,input_length,outputs,outputs2,dense,preds,labels,input_length,label_length,loss_out,model = all_model
+    inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = all_model
     flattened_input_x_width = keras.backend.squeeze(input_length, axis=-1)
     top_k_decoded, _ = my_ctc_decode(preds, flattened_input_x_width)
     decoder = K.function([inputs, flattened_input_x_width], [top_k_decoded[0]])
