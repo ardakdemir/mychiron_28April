@@ -45,7 +45,7 @@ from keras.backend import *
 import keras.backend as K
 from keras import callbacks,losses
 from keras.layers import Dense, Activation,Input,LSTM, Lambda
-def my_ctc_decode(y_pred, input_length, greedy=True, beam_width=100, top_paths=1):
+def my_ctc_decode(y_pred, input_length, greedy=False, beam_width=100, top_paths=1):
   """Decodes the output of a softmax.
   Can use either greedy search (also known as best path)
   or a constrained dictionary search.
