@@ -75,12 +75,15 @@ seq_len = 300
 max_nuc_len = 48
 pickle_path = "toy_data.pk"
 
+
+
 # #max_nuc_len is interesting
 def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = 48):
     inputs = Input(shape=input_shape)
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     outputs = chiron_cnn(inputs,cnn_filter_num,1,window_len,res_layers = res_layers)
-    outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
+    #outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
+    outputs2 = my_rnn_layers(outputs,input_shape[0],hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
     dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
     dense2 =  TimeDistributed(Dense(class_num))(dense)
     preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
@@ -256,11 +259,11 @@ def chiron_res_layer(inputs,filternum1,filtersize1,filtersize2,activation = 'rel
 
 def my_rnn_layers(x,
                seq_length,
-               training,
-               hidden_num=100,
-               layer_num=3,
+               training=True,
+               hidden_num=200,
+               layer_num=5,
                class_n=5,
-               cell='LSTM',
+               cell='BNLSTM',
                dtype = tf.float32):
     """Generate RNN layers.
 
@@ -301,6 +304,7 @@ def my_rnn_layers(x,
         lasth,_,_ = stack_bidirectional_dynamic_rnn(
                 cells_fw=cells_fw, cells_bw=cells_bw, inputs=x, sequence_length=seq_length, dtype=dtype, scope=scope)
     return lasth
+
 def chiron_rnn(inputs,hidden_num =200,rnn_layers = 3,class_num = class_num ):
     x = inputs
     for i in range(rnn_layers):
@@ -345,6 +349,8 @@ def train():
     inputpath = FLAGS.input
     seq_length = FLAGS.sequence_len
     model_name = FLAGS.model
+    model_folder = FLAGS.modelfolder
+
     size = FLAGS.size
     epochs = FLAGS.epoch_num
     #dev_size = int(size/10)
@@ -352,7 +358,9 @@ def train():
     epoch_num = FLAGS.epoch_num
     #train_size = int(size - dev_size)
     test_folder = ""
-    CB = [callbacks.ModelCheckpoint(model_name+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=3)
+    if model_folder not in os.listdir:
+        os.mkdir model_folder
+    CB = [callbacks.ModelCheckpoint(os.path.join(model_folder,model_name)+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=3)
     ,callbacks.EarlyStopping(monitor="val_loss", patience=5, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
     if readraw:
         print("Reading raw data")
@@ -396,7 +404,7 @@ def train():
     print(model_name)
     history = model.fit([train_x,np.array(train_y_labels),np.array(train_input_lengths),np.array(train_label_lengths)],outputs,batch_size = batch_size,callbacks=CB,epochs=epoch_num,validation_split=0.2)
     #model.save( "model/" + model_name + ".h5")
-    model.save_weights(model_name+"_weights.h5")
+    model.save_weights(os.path.join(model_folder,model_name)+"_weights.h5")
     figureSavePath=model_name + ".png"
     plt.plot(history.history["loss"])
     plt.plot(history.history["val_loss"])
@@ -437,6 +445,7 @@ def main(arguments=sys.argv[1:]):
     parser_train.add_argument('-r', '--readraw', default = False,type=bool,help="Boolean False for reading from h5 True for reading raw")
     parser_train.add_argument('-t', '--savetype', default = 0,type=int,help="Binary value 0 for saving model directly 1 for saving weights")
     parser_train.add_argument('-m', '--model', default = "model%s"%current_time, help="File name of the model file or the model weight file in h5 format.")
+    parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
     parser_train.add_argument('-s', '--size',  type = int,default = 10,  help="Number of samples to be read from the input file")
     parser_train.add_argument('-o', '--out_file', default = "scores.txt", help="File name to output scores.")
     parser_train.add_argument('-b', '--batch_size', default = 32, help="Batch size")
@@ -490,6 +499,7 @@ if __name__ == "__main__":
     model2 = Model(inputs= inputs,outputs=preds)
     sgd = SGD()
     model2.summary()
+
 
 
 
