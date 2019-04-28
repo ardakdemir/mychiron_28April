@@ -319,7 +319,7 @@ def train():
         print(y_labels[0])
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
     input_shape = x_tr.shape[1:]
-    max_nuc_len = max(label_lengths)
+    max_nuc_len = np.max(label_lengths)
     print(max_nuc_len)
     print(y_labels[0])
     all_model = create_model(input_shape=input_shape,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = max_nuc_len)
