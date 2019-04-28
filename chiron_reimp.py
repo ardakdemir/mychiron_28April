@@ -358,7 +358,7 @@ def train():
     epoch_num = FLAGS.epoch_num
     #train_size = int(size - dev_size)
     test_folder = ""
-    if model_folder not in os.listdir():
+    if model_folder not in os.listdir("."):
         os.mkdir(model_folder)
     CB = [callbacks.ModelCheckpoint(os.path.join(model_folder,model_name)+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=3)
     ,callbacks.EarlyStopping(monitor="val_loss", patience=5, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
