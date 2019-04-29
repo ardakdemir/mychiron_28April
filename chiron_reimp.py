@@ -79,7 +79,7 @@ pickle_path = "toy_data.pk"
 
 
 # #max_nuc_len is interesting
-def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = 48):
+def create_model(input_shape=(300,1),fcc=2,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = 48):
     inputs = Input(shape=input_shape)
     input_length = Input(name='input_length', shape=[1], dtype='int64')
     seq_len = tf.placeholder(tf.int32, shape=[batch_size])
@@ -87,8 +87,13 @@ def create_model(input_shape=(300,1),cnn_filter_num =256,window_len = 3,res_laye
     outputs = chiron_cnn(inputs,cnn_filter_num,1,window_len,res_layers = res_layers)
     outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
     #outputs2 = my_rnn_layers(outputs,seq_len,training,hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
-    dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
-    dense2 =  TimeDistributed(Dense(class_num))(dense)
+    #dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
+    if fcc = 2:
+        dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
+        dense2 =  TimeDistributed(Dense(class_num))(outputs2)
+    else:
+        dense =  TimeDistributed(Dense(class_num))(outputs2)
+        dense2 =  TimeDistributed(Dense(class_num))(dense)
     preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
     labels = Input(name='the_labels', shape=[max_nuc_len], dtype='int32')
     input_length = Input(name='input_length', shape=[1], dtype='int32')
@@ -438,6 +443,7 @@ def main(arguments=sys.argv[1:]):
     parser_call.add_argument('-ss', '--samplenum',  type = int , default = 1, help="Number of signals to be read from the input file")
     parser_call.add_argument('-o', '--out_file', type= str, default = "scores.txt", help="File name to output scores.")
     parser_call.add_argument('-rnn', '--rnn_layers', type= int, default = 5, help="Number of rnn layers")
+    parser_call.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")
     parser_call.add_argument('-g', '--gpu', type=str, default='0', help="GPU ID")
     parser_call.add_argument('--beam', type=int, default=50, help="Beam width used in beam search decoder")
     parser_call.set_defaults(func=evaluation)
@@ -448,7 +454,8 @@ def main(arguments=sys.argv[1:]):
     parser_train.add_argument('-r', '--readraw', default = False,type=bool,help="Boolean False for reading from h5 True for reading raw")
     parser_train.add_argument('-t', '--savetype', default = 0,type=int,help="Binary value 0 for saving model directly 1 for saving weights")
     parser_train.add_argument('-m', '--model', default = "model%s"%current_time, help="File name of the model file or the model weight file in h5 format.")
-    parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
+    parser_train.add_argument('-rnn', '--rnn_layers', type= int, default = 5, help="Number of rnn layers")
+    parser_train.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")    parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
     parser_train.add_argument('-s', '--size',  type = int,default = 10,  help="Number of samples to be read from the input file")
     parser_train.add_argument('-o', '--out_file', default = "scores.txt", help="File name to output scores.")
     parser_train.add_argument('-b', '--batch_size', default = 32, help="Batch size")
