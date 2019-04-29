@@ -316,7 +316,7 @@ def chiron_rnn(inputs,hidden_num =200,rnn_layers = 3,class_num = class_num ):
     #x = FC(x)
     return x
 def chiron_bilstm_layer(inputs,hidden_num):
-    firstbi = Bidirectional(LSTMBN(hidden_num, return_sequences=True),
+    firstbi = Bidirectional(LSTM(hidden_num, return_sequences=True),
                         input_shape=inputs.shape)
     x = inputs
     x = firstbi(x)
