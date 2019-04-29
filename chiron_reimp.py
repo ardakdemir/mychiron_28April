@@ -88,7 +88,7 @@ def create_model(input_shape=(300,1),fcc=2,cnn_filter_num =256,window_len = 3,re
     outputs2 = chiron_rnn(outputs,hidden_num = rnn_hidden_num,rnn_layers = rnn_layers, class_num = class_num)
     #outputs2 = my_rnn_layers(outputs,seq_len,training,hidden_num = rnn_hidden_num, layer_num = rnn_layers, class_n = class_num,cell='BNLSTM')
     #dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
-    if fcc = 2:
+    if fcc == 2:
         dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
         dense2 =  TimeDistributed(Dense(class_num))(outputs2)
     else:
@@ -119,7 +119,7 @@ def delete_blanks_2(preds,key = 4):
         else:
             deleted_preds.append(pred)
     return deleted_preds
-def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,test_size = 100,sample_num = 100,seq_len = 300,out_file = "results.txt"):
+def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = False,test_size = 100,sample_num = 100,seq_len = 300,out_file = "results.txt"):
 
     os.environ["CUDA_VISIBLE_DEVICES"] = Flags.gpu
     print(os.environ["CUDA_VISIBLE_DEVICES"])
@@ -157,7 +157,7 @@ def test_model(load_type,model_path,test_name,rnn_layers=5, read_raw = False,tes
         #preds = K.function([model.input],
         #                          [model.get_layer(layer_name).output])
     else:
-        inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = create_model(rnn_layers=rnn_layers)
+        inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = create_model(fcc = fcc, rnn_layers=rnn_layers)
         model.load_weights(model_path)
     #model.summary()
     #preds.summary()
@@ -348,8 +348,8 @@ def evaluation(args):
 
     Flags = args
     os.environ["CUDA_VISIBLE_DEVICES"] = '1'
-
-    test_model(Flags.loadtype,Flags.model,Flags.input, rnn_layers= Flags.rnn_layers,read_raw = Flags.readraw, sample_num= Flags.samplenum,test_size = Flags.size,out_file  = Flags.out_file )
+    fc_layers = Flags.fc_layers
+    test_model(Flags.loadtype,Flags.model,Flags.input, fcc = fc_layers,rnn_layers= Flags.rnn_layers,read_raw = Flags.readraw, sample_num= Flags.samplenum,test_size = Flags.size,out_file  = Flags.out_file )
 
 def train():
     loadtype = FLAGS.savetype
@@ -358,7 +358,7 @@ def train():
     seq_length = FLAGS.sequence_len
     model_name = FLAGS.model
     model_folder = FLAGS.modelfolder
-
+    fc_layers = FLAGS.fc_layers
     size = FLAGS.size
     epochs = FLAGS.epoch_num
     #dev_size = int(size/10)
