@@ -11,7 +11,7 @@ from keras.backend import ctc_decode, variable,get_value
 import keras.backend as K
 from keras import *
 from keras import callbacks,losses
-from keras.layers import Dense, Activation,Input,LSTM, Lambda,LSTMBN
+from keras.layers import Dense, Activation,Input,LSTM, Lambda
 from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes as dtypes_module
 #from tensorflow.python.framework import func_graph
