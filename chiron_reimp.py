@@ -90,10 +90,10 @@ def create_model(input_shape=(300,1),fcc=2,cnn_filter_num =256,window_len = 3,re
     #dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
     if fcc == 2:
         dense =  TimeDistributed(Dense(rnn_hidden_num))(outputs2)
-        dense2 =  TimeDistributed(Dense(class_num))(outputs2)
+        dense2 =  TimeDistributed(Dense(class_num))(dense)
     else:
         dense =  TimeDistributed(Dense(class_num))(outputs2)
-        dense2 =  TimeDistributed(Dense(class_num))(dense)
+        dense2 =  TimeDistributed(Dense(class_num))(outputs2)
     preds = TimeDistributed(Activation('softmax',name = 'softmax'))(dense2)
     labels = Input(name='the_labels', shape=[max_nuc_len], dtype='int32')
     input_length = Input(name='input_length', shape=[1], dtype='int32')
@@ -313,7 +313,7 @@ def my_rnn_layers(x,
                 cells_fw=cells_fw, cells_bw=cells_bw, inputs=x, sequence_length=seq_length, dtype=dtype, scope=scope)
     return lasth
 
-def chiron_rnn(inputs,hidden_num =200,rnn_layers = 3,class_num = class_num ):
+def chiron_rnn(inputs,hidden_num =200,rnn_layers = 5,class_num = class_num ):
     x = inputs
     for i in range(rnn_layers):
         x = chiron_bilstm_layer(x,hidden_num = hidden_num)
@@ -325,7 +325,7 @@ def chiron_bilstm_layer(inputs,hidden_num):
                         input_shape=inputs.shape)
     x = inputs
     x = firstbi(x)
-    #x = BatchNormalization()(x)
+    x = BatchNormalization()(x)
     return x
 
 # Define CTC loss
