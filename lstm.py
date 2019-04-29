@@ -95,6 +95,7 @@ class LSTMBN(LSTM):
                  W_regularizer=None, U_regularizer=None, b_regularizer=None,
                  dropout_W=0., dropout_U=0.,
                  batch_norm=False, gamma_init=0.1, **kwargs):
+        super(LSTM, self).__init__(**kwargs)
         self.output_dim = output_dim
         self.init = initializers.get(init)
         self.inner_init = initializers.get(inner_init)
@@ -116,7 +117,7 @@ class LSTMBN(LSTM):
             self.uses_learning_phase = True
         if self.dropout_W or self.dropout_U:
             self.uses_learning_phase = True
-        super(LSTM, self).__init__(**kwargs)
+
 
     def build(self, input_shape):
         self.input_spec = [InputSpec(shape=input_shape)]
