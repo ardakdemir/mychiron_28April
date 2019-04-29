@@ -5,7 +5,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.rnn.python.ops.core_rnn_cell import RNNCell
-from keras.layers import RNN
+from keras.layers import RNN,LSTM
 from keras import *
 
 class LSTMCell(RNNCell):
