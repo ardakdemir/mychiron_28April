@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.rnn.python.ops.core_rnn_cell import RNNCell
 from keras.layers import RNN
+from keras import *
 
 class LSTMCell(RNNCell):
     '''Vanilla LSTM implemented with same initializations as BN-LSTM'''
