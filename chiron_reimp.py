@@ -242,7 +242,7 @@ def read_pickle(pickle_path,example_num = 100 , class_num = 5 , seq_len = 300 ,p
 
 ## conv-layer
 def conv1D_layer(inputs,filternum,filtersize,activation='relu',use_bias=False):
-    conv = Conv1D(filternum,filtersize,padding='same',use_bias = False, input_shape = inputs.shape)
+    conv = Conv1D(filternum,filtersize,padding='same',use_bias = True, input_shape = inputs.shape)
     x = inputs
     x = conv(x)
     x = BatchNormalization()(x)
