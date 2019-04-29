@@ -448,14 +448,14 @@ def main(arguments=sys.argv[1:]):
     parser_call.add_argument('--beam', type=int, default=50, help="Beam width used in beam search decoder")
     parser_call.set_defaults(func=evaluation)
 
-
     parser_train = subparsers.add_parser('train', description='Segmented basecalling', help='Train a  basecaller.')
     parser_train.add_argument('-i', '--input', required=True, help= "File path to the cached_data in h5 format or folder of the raw signals and labels.")
     parser_train.add_argument('-r', '--readraw', default = False,type=bool,help="Boolean False for reading from h5 True for reading raw")
     parser_train.add_argument('-t', '--savetype', default = 0,type=int,help="Binary value 0 for saving model directly 1 for saving weights")
     parser_train.add_argument('-m', '--model', default = "model%s"%current_time, help="File name of the model file or the model weight file in h5 format.")
     parser_train.add_argument('-rnn', '--rnn_layers', type= int, default = 5, help="Number of rnn layers")
-    parser_train.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")    parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
+    parser_train.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")
+    parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
     parser_train.add_argument('-s', '--size',  type = int,default = 10,  help="Number of samples to be read from the input file")
     parser_train.add_argument('-o', '--out_file', default = "scores.txt", help="File name to output scores.")
     parser_train.add_argument('-b', '--batch_size', default = 32, help="Batch size")
