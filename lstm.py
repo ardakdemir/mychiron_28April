@@ -49,7 +49,7 @@ class LSTMCell(RNNCell):
 
             return new_h, (new_c, new_h)
 
-class LSTMBN(RNN):
+class LSTMBN(LSTM):
     '''Long-Short Term Memory unit - Hochreiter 1997.
     with Batch Normalization support
     For a step-by-step description of the algorithm, see
