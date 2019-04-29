@@ -9,7 +9,7 @@ from keras.layers import RNN
 from keras import *
 
 class LSTMCell(RNNCell):
-    '''Vanilla LSTM implemented with same initializations as BN-LSTM'''
+    '''Vanilla LSTM implemented with same initializers as BN-LSTM'''
 
     def __init__(self, num_units):
         self.num_units = num_units
@@ -58,7 +58,7 @@ class LSTMBN(RNN):
         output_dim: dimension of the internal projections and the final output.
         init: weight initialization function.
             Can be the name of an existing function (str),
-            or a Theano function (see: [initializations](../initializations.md)).
+            or a Theano function (see: [initializers](../initializers.md)).
         inner_init: initialization function of the inner cells.
         forget_bias_init: initialization function for the bias of the forget gate.
             [Jozefowicz et al.](http://www.jmlr.org/proceedings/papers/v37/jozefowicz15.pdf)
@@ -96,9 +96,9 @@ class LSTMBN(RNN):
                  dropout_W=0., dropout_U=0.,
                  batch_norm=False, gamma_init=0.1, **kwargs):
         self.output_dim = output_dim
-        self.init = initializations.get(init)
-        self.inner_init = initializations.get(inner_init)
-        self.forget_bias_init = initializations.get(forget_bias_init)
+        self.init = initializers.get(init)
+        self.inner_init = initializers.get(inner_init)
+        self.forget_bias_init = initializers.get(forget_bias_init)
         self.activation = activations.get(activation)
         self.inner_activation = activations.get(inner_activation)
         self.W_regularizer = regularizers.get(W_regularizer)
@@ -110,7 +110,7 @@ class LSTMBN(RNN):
             def gamma_init_func(shape, name=None, c=gamma_init):
                 return K.variable(np.ones(shape) * c, name=name)
             self.gamma_init = gamma_init_func
-            self.beta_init = initializations.get('zero')
+            self.beta_init = initializers.get('zero')
             self.momentum = 0.9
             self.epsilon = 1e-6
             self.uses_learning_phase = True
