@@ -344,7 +344,7 @@ def evaluation(args):
     Flags = args
     os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
-    test_model(Flags.loadtype,Flags.model,Flags.input, read_raw = Flags.readraw, sample_num= Flags.samplenum,test_size = Flags.size,out_file  = Flags.out_file )
+    test_model(Flags.loadtype,Flags.model,Flags.input, rnn_layers= Flags.rnn_layers,read_raw = Flags.readraw, sample_num= Flags.samplenum,test_size = Flags.size,out_file  = Flags.out_file )
 
 def train():
     loadtype = FLAGS.savetype
@@ -437,7 +437,7 @@ def main(arguments=sys.argv[1:]):
     parser_call.add_argument('-s', '--size',  type = int , default = '100', help="Number of segments to be read from the input file")
     parser_call.add_argument('-ss', '--samplenum',  type = int , default = 1, help="Number of signals to be read from the input file")
     parser_call.add_argument('-o', '--out_file', type= str, default = "scores.txt", help="File name to output scores.")
-
+    parser_call.add_argument('-rnn', '--rnn_layers', type= int, default = 5, help="Number of rnn layers")
     parser_call.add_argument('-g', '--gpu', type=str, default='0', help="GPU ID")
     parser_call.add_argument('--beam', type=int, default=50, help="Beam width used in beam search decoder")
     parser_call.set_defaults(func=evaluation)

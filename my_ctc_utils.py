@@ -45,7 +45,7 @@ from keras.backend import *
 import keras.backend as K
 from keras import callbacks,losses
 from keras.layers import Dense, Activation,Input,LSTM, Lambda
-def my_ctc_decode(y_pred, input_length, greedy=False, beam_width=100, top_paths=1):
+def my_ctc_decode(y_pred, input_length, greedy=False, beam_width=50, top_paths=1):
   """Decodes the output of a softmax.
   Can use either greedy search (also known as best path)
   or a constrained dictionary search.
@@ -90,7 +90,7 @@ def my_ctc_decode(y_pred, input_length, greedy=False, beam_width=100, top_paths=
   return (decoded_dense, log_prob)
 
 def my_ctc_beam_search_decoder(inputs, sequence_length, beam_width=100,
-                            top_paths=1, merge_repeated=False):
+                            top_paths=1, merge_repeated=True):
   """Performs beam search decoding on the logits given in input.
   **Note** The `ctc_greedy_decoder` is a special case of the
   `ctc_beam_search_decoder` with `top_paths=1` and `beam_width=1` (but
@@ -199,4 +199,4 @@ def my_ctc_batch_cost(y_true, y_pred, input_length, label_length):
 
   return array_ops.expand_dims(
       ctc.ctc_loss(
-          inputs=y_pred, labels=sparse_labels, sequence_length=input_length,ctc_merge_repeated=False), 1)
+          inputs=y_pred, labels=sparse_labels, sequence_length=input_length,ctc_merge_repeated=True), 1)
