@@ -10,13 +10,24 @@ import glob
 #from statsmodels import robust
 from collections import Counter
 import random
+import numpy as np
 from train_unet_gplabel import loading_data
 Alphabeta = ['A', 'C', 'G', 'T']
 ## read data into suitable format for the model
 def split_data(inputs,test_size):
     return tuple(map(lambda x : x[:-test_size],inputs)),tuple(map(lambda x : x[-test_size:],inputs))
 
-
+def shuffle_arrays(arrs):
+    np.random.seed(0)
+    inds = [i for i in range(len(arrs[0]))]
+    np.random.shuffle(inds)
+    arrs_shuffled = []
+    for arr in arrs:
+        arr_new = []
+        for ind in inds :
+            arr_new.append(arr[ind])
+        arrs_shuffled.append(np.array(arr_new))
+    return arrs_shuffled
 
 def unet_loading_data(cacheFile):
   pad = 4
@@ -31,6 +42,8 @@ def unet_loading_data(cacheFile):
       else:
           raw_mapped = [int(r)-1  for  r in raw]
           y_labels.append(raw_mapped)
+  arrs = [X,seq_len,y_labels,label_new]
+  X,seq_len,y_labels,label_new = shuffle_arrays(arrs)
   return X,seq_len,label,label_vec,label_seg,y_labels,label_new
 def read_raw_into_segments(signal_folder,seq_length = 300,normalize= "mean",sample_num = 100,y_pad = 4):
     signals = glob.glob(os.path.join(signal_folder,"*.signal"))

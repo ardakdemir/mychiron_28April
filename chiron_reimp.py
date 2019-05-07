@@ -139,10 +139,15 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
         #print("Reading h5 data")
         #print(len(x_tr[0]))
+        np.random.seed(12)
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
         X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(test_name)
+        data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
+        np.random.shuffle(data)
+        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data) 
+        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
         example_num = X.shape[0]
         x_tr = X.reshape(example_num,seq_len,1)
         y_labels = label_raw
@@ -380,6 +385,14 @@ def train():
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
         X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(inputpath)
+        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(test_name)
+        print(X.shape)
+        #np.random.seed(0)
+        #data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
+        #np.random.shuffle(data)
+        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data)
+        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
+        print(X.shape[0])
         example_num = X.shape[0]
         x_tr = X.reshape(example_num,seq_len,1)
         y_labels = label_raw
