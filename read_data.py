@@ -23,14 +23,14 @@ def unet_loading_data(cacheFile):
   X, seq_len , label , label_vec , label_seg,label_raw , label_new = loading_data(cacheFile)
   y_labels = []
   for seg,raw in zip(label_seg,label_raw):
-
       c= np.count_nonzero(seg==0)
       if c >0 :
-        raw_mapped = raw
+        raw_mapped = [int(r)-1  for  r in raw]
         raw_mapped[-c:] = [pad for i in range(c)]
         y_labels.append(raw_mapped)
       else:
-          y_labels.append(raw)
+          raw_mapped = [int(r)-1  for  r in raw]
+          y_labels.append(raw_mapped)
   return X,seq_len,label,label_vec,label_seg,y_labels,label_new
 def read_raw_into_segments(signal_folder,seq_length = 300,normalize= "mean",sample_num = 100,y_pad = 4):
     signals = glob.glob(os.path.join(signal_folder,"*.signal"))

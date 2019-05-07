@@ -398,7 +398,7 @@ def train():
     top_k_decoded, _ = my_ctc_decode(preds, flattened_input_x_width)
     decoder = K.function([inputs, flattened_input_x_width], [top_k_decoded[0]])
     #model3 = Model(inputs= [inputs,labels,input_length,label_length],outputs=loss_out)
-    model.summary()
+    #model.summary()
     model.compile(loss = {'ctc': lambda y_true, y_pred: y_pred},optimizer = Adam())
     print(x_tr.shape)
     train_x = x_tr
@@ -458,7 +458,7 @@ def main(arguments=sys.argv[1:]):
     parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
     parser_train.add_argument('-s', '--size',  type = int,default = 10,  help="Number of samples to be read from the input file")
     parser_train.add_argument('-o', '--out_file', default = "scores.txt", help="File name to output scores.")
-    parser_train.add_argument('-b', '--batch_size', default = 32, help="Batch size")
+    parser_train.add_argument('-b', '--batch_size', type=int ,default = 32, help="Batch size")
     parser_train.add_argument('-e', '--epoch_num',type=int, default = 10, help="Epoch number")
     parser_train.add_argument('-l', '--sequence_len', type=int, default=300, help="Segment length to be divided into.")
     parser_train.add_argument('-g', '--gpu', type=str, default='0', help="GPU ID")
