@@ -33,14 +33,25 @@ def unet_loading_data(cacheFile):
   pad = 4
   X, seq_len , label , label_vec , label_seg,label_raw , label_new = loading_data(cacheFile)
   y_labels = []
+  minus_flag = False
+  for raws in label_raw:
+      if 4 in raws:
+          minus_flag = True
+          break
   for seg,raw in zip(label_seg,label_raw):
       c= np.count_nonzero(seg==0)
       if c >0 :
-        raw_mapped = [int(r)-1  for  r in raw]
+        if minus_flag:
+          raw_mapped = [int(r)-1  for  r in raw]
+        else:
+          raw_mapped = [int(r) for r in raw]
         raw_mapped[-c:] = [pad for i in range(c)]
         y_labels.append(raw_mapped)
       else:
-          raw_mapped = [int(r)-1  for  r in raw]
+          if minus_flag:
+            raw_mapped = [int(r)-1  for  r in raw]
+          else:
+            raw_mapped = [int(r) for r in raw]
           y_labels.append(raw_mapped)
   arrs = [X,seq_len,y_labels,label_new]
   X,seq_len,y_labels,label_new = shuffle_arrays(arrs)

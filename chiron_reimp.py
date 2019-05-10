@@ -144,17 +144,17 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
         X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(test_name)
-        data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
-        np.random.shuffle(data)
-        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data) 
-        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
+        #data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
+        #np.random.shuffle(data)
+        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data) 
+        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
         example_num = X.shape[0]
         x_tr = X.reshape(example_num,seq_len,1)
         y_labels = label_raw
         label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
         print(x_tr.shape)
         print(len(y_labels))
-        print(y_labels[0])
+        print(y_labels[:20])
     if  load_type == 0:
         model = load_model(model_path)
         layer_name = 'softmax'
@@ -182,7 +182,6 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
         for d in decoded_:
             decoded.append(d)
     #print(inputs.shape)
-    #print(inputs[0])
     #print(len(y_labels[0]))
     #print(y_labels.shape)
     #decoded = decoder([inputs, shapes])[0]
@@ -357,7 +356,11 @@ def evaluation(args):
     test_model(Flags.loadtype,Flags.model,Flags.input, fcc = fc_layers,rnn_layers= Flags.rnn_layers,read_raw = Flags.readraw, sample_num= Flags.samplenum,test_size = Flags.size,out_file  = Flags.out_file )
 
 def train():
+    gpu = FLAGS.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = FLAGS.gpu
     loadtype = FLAGS.savetype
+    load_flag = FLAGS.loadflag
+    load_model = FLAGS.loadmodel
     readraw  = FLAGS.readraw
     inputpath = FLAGS.input
     seq_length = FLAGS.sequence_len
@@ -374,12 +377,13 @@ def train():
     if model_folder not in os.listdir("."):
         os.mkdir(model_folder)
     CB = [callbacks.ModelCheckpoint(os.path.join(model_folder,model_name)+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=3)
-    ,callbacks.EarlyStopping(monitor="val_loss", patience=5, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=32, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
+    ,callbacks.EarlyStopping(monitor="val_loss", patience=10, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=batch_size, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
     if readraw:
         print("Reading raw data")
         x_tr, y_labels , label_lengths,max_label_length= read_raw_into_segments(inputpath,seq_length = seq_len, sample_num = size,y_pad = 4)
         x_tr = np.array(x_tr).reshape(len(x_tr),seq_len,1)
     else:
+        
         #return X, seq_len, label, label_vec, label_seg, label_raw
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
@@ -399,14 +403,30 @@ def train():
         label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
         print(x_tr.shape)
         print(len(y_labels))
-        print(y_labels[0])
+        print("First labels")
+        for i in range(50):
+            print(y_labels[i])
+        #print("First x's")
+            print(x_tr[i])
+        print("Last labels")
+        #print(y_labels[-i:])
+        #print("Last  x's")
+        for i in range(50):
+            print(y_labels[-i])
+            print(x_tr[-i])
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
     input_shape = x_tr.shape[1:]
     max_nuc_len = np.max(label_lengths)
     print(max_nuc_len)
     print(y_labels[0])
-    all_model = create_model(input_shape=input_shape,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = max_nuc_len)
-    inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = all_model
+    if load_flag:
+        print("Restart training model : %s "%load_model)
+        inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = create_model(fcc = fc_layers, rnn_layers=rnn_layers,max_nuc_len=max_nuc_len)
+        model.load_weights(load_model)
+    else :
+        #print("Restart training model : %s ")
+        all_model = create_model(input_shape=input_shape,cnn_filter_num =256,window_len = 3,res_layers = 5,rnn_layers = 5,rnn_hidden_num = 200,class_num=5,max_nuc_len = max_nuc_len)
+        inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = all_model
     flattened_input_x_width = keras.backend.squeeze(input_length, axis=-1)
     top_k_decoded, _ = my_ctc_decode(preds, flattened_input_x_width)
     decoder = K.function([inputs, flattened_input_x_width], [top_k_decoded[0]])
@@ -466,6 +486,9 @@ def main(arguments=sys.argv[1:]):
     parser_train.add_argument('-r', '--readraw', default = False,type=bool,help="Boolean False for reading from h5 True for reading raw")
     parser_train.add_argument('-t', '--savetype', default = 0,type=int,help="Binary value 0 for saving model directly 1 for saving weights")
     parser_train.add_argument('-m', '--model', default = "model%s"%current_time, help="File name of the model file or the model weight file in h5 format.")
+    
+    parser_train.add_argument('-lf', '--loadflag', type=bool, default = False, help="Train an already  loaded model.")
+    parser_train.add_argument('-lm', '--loadmodel', default = "my_model", help="File name of the model file or the model to be loaded weight file in h5 format.")
     parser_train.add_argument('-rnn', '--rnn_layers', type= int, default = 5, help="Number of rnn layers")
     parser_train.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")
     parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
