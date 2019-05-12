@@ -143,7 +143,7 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
-        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(test_name)
+        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new,label_lengths= unet_loading_data(test_name)
         #data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
         #np.random.shuffle(data)
         #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data) 
@@ -151,7 +151,7 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
         example_num = X.shape[0]
         x_tr = X.reshape(example_num,seq_len,1)
         y_labels = label_raw
-        label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
+        #label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
         print(x_tr.shape)
         print(len(y_labels))
         print(y_labels[:20])
@@ -175,7 +175,7 @@ def test_model(load_type,model_path,test_name,fcc= 2,rnn_layers=5, read_raw = Fa
     inputs = np.array(x_tr).reshape(len(x_tr),seq_len,1)
     shapes = [len(x_tr[0])for i in range(len(x_tr))]
     decoded = []
-    test_batch_size = 32
+    test_batch_size = Flags.batch_size
     for i in range(int(len(inputs)/test_batch_size)):
         decoded_ = decoder([inputs[i*test_batch_size:(i+1)*test_batch_size],shapes[i*test_batch_size:(i+1)*test_batch_size]])[0]
         #print(i)
@@ -376,7 +376,7 @@ def train():
     test_folder = ""
     if model_folder not in os.listdir("."):
         os.mkdir(model_folder)
-    CB = [callbacks.ModelCheckpoint(os.path.join(model_folder,model_name)+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=3)
+    CB = [callbacks.ModelCheckpoint(os.path.join(model_folder,model_name)+"check", monitor='val_loss', verbose=0, save_best_only=False, save_weights_only=True, mode='auto', period=1)
     ,callbacks.EarlyStopping(monitor="val_loss", patience=10, mode="auto", restore_best_weights=True),keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, batch_size=batch_size, write_graph=True, write_grads=False, write_images=False, embeddings_freq=0, embeddings_layer_names=None, embeddings_metadata=None, embeddings_data=None, update_freq='epoch')]
     if readraw:
         print("Reading raw data")
@@ -388,37 +388,40 @@ def train():
         print("Reading h5 data")
         #h5_dict = read_h5(test_folder,inputpath,example_num = size)
         #x_tr,y_tr,y_categorical,y_labels,label_lengths = read_from_dict(h5_dict,example_num = size , class_num = 5 , seq_len = 300 ,padding = True)
-        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(inputpath)
+        X,seq_lens,label,label_vec,label_seg,label_raw ,label_new,label_lengths = unet_loading_data(inputpath)
         #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= unet_loading_data(test_name)
         print(X.shape)
         #np.random.seed(0)
         #data = list(zip(X,seq_lens,label,label_vec,label_seg,label_raw,label_new))
         #np.random.shuffle(data)
         #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= zip(*data)
-        #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
+       #X,seq_lens,label,label_vec,label_seg,label_raw ,label_new= np.array(X),np.array(seq_lens),np.array(label),np.array(label_vec),np.array(label_seg),np.array(label_raw),np.array(label_new)
         print(X.shape[0])
         example_num = X.shape[0]
         x_tr = X.reshape(example_num,seq_len,1)
         y_labels = label_raw
-        label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
-        print(x_tr.shape)
-        print(len(y_labels))
-        print("First labels")
-        for i in range(50):
-            print(y_labels[i])
+        #label_lengths = [len(label_raw[i])for i in range(len(label_raw))]
+        print(label_lengths[:50])
+        print(label_lengths[-50:])
+        #print(len(y_labels))
+        #print("First labels")
+        #for i in range(50):
+        #    print(y_labels[i])
         #print("First x's")
-            print(x_tr[i])
-        print("Last labels")
+        #    print(x_tr[i])
+        #print("Last labels")
         #print(y_labels[-i:])
         #print("Last  x's")
-        for i in range(50):
-            print(y_labels[-i])
-            print(x_tr[-i])
+        #for i in range(50):
+        #    print(y_labels[-i])
+        #    print(x_tr[-i])
         #assert len(x_tr)== len(y_tr) == len(y_categorical )== len(y_labels) == len(label_lengths), "Dimension not matched"
     input_shape = x_tr.shape[1:]
     max_nuc_len = np.max(label_lengths)
     print(max_nuc_len)
     print(y_labels[0])
+    print(label_lengths[:50])
+    print(label_lengths[-50:])
     if load_flag:
         print("Restart training model : %s "%load_model)
         inputs,input_length,outputs,outputs2,dense,dense2,preds,labels,input_length,label_length,loss_out,model = create_model(fcc = fc_layers, rnn_layers=rnn_layers,max_nuc_len=max_nuc_len)
@@ -438,12 +441,32 @@ def train():
     train_y_labels= y_labels
     train_input_lengths = np.array([seq_length for i in range(x_tr.shape[0])])
     train_label_lengths = np.array(label_lengths)
+    np.random.seed(42)    
+    
+    inds = [i for i in range(len(x_tr))]
+    print(inds[:50])
+    np.random.shuffle(inds)
+    val_split = 0.2
+    #train_inds = inds[:int(len(inds)*(1-val_split))]
+    #val_inds = inds[int(len(inds)*(1-val_split)):]
+    train_x2 = [x_tr[i] for i in inds]
+    train_y_labels2 = [y_labels[i] for i in  inds]
+    train_input_lengths2 =np.array( [train_input_lengths[i] for i in inds])
+    train_label_lengths2 =np.array( [train_label_lengths[i] for i in inds])
+    print(inds[:50]) 
+    #dev_x = [x_tr[i] for i in val_inds]
+    #dev_y_labels = [y_labels[i] for i in  val_inds]
+    #dev_input_lengths = np.array([train_input_lengths[i] for i in val_inds])
+    #dev_label_lengths = np.array([train_label_lengths[i] for i in val_inds])
     #dev_input_lengths = np.array([seq_length for i in range(dev_size)])
     #dev_label_lengths = np.array(label_lengths[:dev_size])
-    outputs = {'ctc': np.zeros(x_tr.shape[0])}
+    #outputs = {'ctc': np.zeros(x_tr.shape[0])}
+    outputs = {'ctc':np.zeros(len(train_x2))}
     fig=plt.figure()
     print(model_name)
-    history = model.fit([train_x,np.array(train_y_labels),np.array(train_input_lengths),np.array(train_label_lengths)],outputs,batch_size = batch_size,callbacks=CB,epochs=epoch_num,validation_split=0.2)
+    #history = model.fit([train_x,np.array(train_y_labels),np.array(train_input_lengths),np.array(train_label_lengths)],outputs,batch_size = batch_size,callbacks=CB,epochs=epoch_num,validation_split=0.2)
+    history = model.fit([train_x2,np.array(train_y_labels2),np.array(train_input_lengths2),np.array(train_label_lengths2)],outputs,batch_size = batch_size,callbacks=CB,epochs=epoch_num,validation_split=0.2)
+
     #model.save( "model/" + model_name + ".h5")
     model.save_weights(os.path.join(model_folder,model_name)+"_weights.h5")
     figureSavePath=model_name + ".png"
@@ -479,6 +502,7 @@ def main(arguments=sys.argv[1:]):
     parser_call.add_argument('-fc', '--fc_layers', type= int, default = 2, help="Number of fc layers")
     parser_call.add_argument('-g', '--gpu', type=str, default='0', help="GPU ID")
     parser_call.add_argument('--beam', type=int, default=50, help="Beam width used in beam search decoder")
+    parser_call.add_argument('-b', '--batch_size', type=int ,default = 200, help="Batch size")
     parser_call.set_defaults(func=evaluation)
 
     parser_train = subparsers.add_parser('train', description='Segmented basecalling', help='Train a  basecaller.')
@@ -494,7 +518,7 @@ def main(arguments=sys.argv[1:]):
     parser_train.add_argument('-mf', '--modelfolder', default = "my_models", help="Folder path to save model")
     parser_train.add_argument('-s', '--size',  type = int,default = 10,  help="Number of samples to be read from the input file")
     parser_train.add_argument('-o', '--out_file', default = "scores.txt", help="File name to output scores.")
-    parser_train.add_argument('-b', '--batch_size', type=int ,default = 32, help="Batch size")
+    parser_train.add_argument('-b', '--batch_size', type=int ,default = 200, help="Batch size")
     parser_train.add_argument('-e', '--epoch_num',type=int, default = 10, help="Epoch number")
     parser_train.add_argument('-l', '--sequence_len', type=int, default=300, help="Segment length to be divided into.")
     parser_train.add_argument('-g', '--gpu', type=str, default='0', help="GPU ID")

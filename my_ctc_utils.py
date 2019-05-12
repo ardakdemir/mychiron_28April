@@ -199,4 +199,4 @@ def my_ctc_batch_cost(y_true, y_pred, input_length, label_length):
 
   return array_ops.expand_dims(
       ctc.ctc_loss(
-          inputs=y_pred, labels=sparse_labels, sequence_length=input_length,ctc_merge_repeated=True), 1)
+          inputs=y_pred, labels=sparse_labels, sequence_length=input_length,ctc_merge_repeated=False), 1)

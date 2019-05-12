@@ -33,13 +33,16 @@ def unet_loading_data(cacheFile):
   pad = 4
   X, seq_len , label , label_vec , label_seg,label_raw , label_new = loading_data(cacheFile)
   y_labels = []
+  label_lengths = []
   minus_flag = False
   for raws in label_raw:
       if 4 in raws:
           minus_flag = True
           break
   for seg,raw in zip(label_seg,label_raw):
+      #label_lengths.append(len(label_raw))
       c= np.count_nonzero(seg==0)
+      label_lengths.append(len(raw)-c)
       if c >0 :
         if minus_flag:
           raw_mapped = [int(r)-1  for  r in raw]
@@ -53,9 +56,9 @@ def unet_loading_data(cacheFile):
           else:
             raw_mapped = [int(r) for r in raw]
           y_labels.append(raw_mapped)
-  arrs = [X,seq_len,y_labels,label_new]
-  X,seq_len,y_labels,label_new = shuffle_arrays(arrs)
-  return X,seq_len,label,label_vec,label_seg,y_labels,label_new
+  #arrs = [X,seq_len,y_labels,label_new]
+  #X,seq_len,y_labels,label_new = shuffle_arrays(arrs)
+  return X,seq_len,label,label_vec,label_seg,y_labels,label_new,label_lengths
 def read_raw_into_segments(signal_folder,seq_length = 300,normalize= "mean",sample_num = 100,y_pad = 4):
     signals = glob.glob(os.path.join(signal_folder,"*.signal"))
     x_data = []
